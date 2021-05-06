@@ -1,0 +1,575 @@
+#include <stdio.h>
+#include <wiringPi.h>
+#include <softPwm.h>
+#include <mqueue.h>
+#include <stdlib.h>
+#include <time.h>
+#include <errno.h>
+#include <string.h>
+
+#define DISPLAY_BRIGHTNESS  500
+
+#define DIGIT_ON  LOW  // define is double-defined
+#define DIGIT_OFF  HIGH
+
+#define SEGMENT_ON  HIGH  
+#define SEGMENT_OFF LOW
+
+mqd_t mfd;
+
+
+
+void Money_PIN_setup()
+{
+	//wiringPiSetup();
+	
+	
+}
+
+PI_THREAD(FND)
+{
+	const int First_SEGMENT_A=15;   
+	const int First_SEGMENT_B=16;   
+	const int First_SEGMENT_C=29;//라즈베리파이의 1번핀이 고장난 관계로 29로 대체 1digit fnd는 commonmode 단자 2개중 1개만 vcc에 연결   
+	const int First_SEGMENT_D=2;   
+	const int First_SEGMENT_E=4;   
+	const int First_SEGMENT_F=3;   
+	const int First_SEGMENT_G=5;
+
+	const int Second_SEGMENT_1=12;   
+	const int Second_SEGMENT_2=6;  
+	const int Second_SEGMENT_3=13;  
+	const int Second_SEGMENT_4=10;  
+	  
+	const int Second_SEGMENT_A=14;   
+	const int Second_SEGMENT_B=11;   
+	const int Second_SEGMENT_C=21;   
+	const int Second_SEGMENT_D=26;   
+	const int Second_SEGMENT_E=22;   
+	const int Second_SEGMENT_F=23;   
+	const int Second_SEGMENT_G=24;
+	
+	void First_initFNDs()
+	{
+	   pinMode(First_SEGMENT_A,OUTPUT);  
+	   pinMode(First_SEGMENT_B,OUTPUT);  
+	   pinMode(First_SEGMENT_C,OUTPUT);  
+	   pinMode(First_SEGMENT_D,OUTPUT);
+	   pinMode(First_SEGMENT_E,OUTPUT);    
+	   pinMode(First_SEGMENT_F,OUTPUT);  
+	   pinMode(First_SEGMENT_G,OUTPUT); 
+	}
+	
+	void First_clearFNDs()
+	{
+		digitalWrite(First_SEGMENT_A,SEGMENT_ON);  
+		digitalWrite(First_SEGMENT_B,SEGMENT_ON);  
+		digitalWrite(First_SEGMENT_C,SEGMENT_ON);  
+		digitalWrite(First_SEGMENT_D,SEGMENT_ON);
+		digitalWrite(First_SEGMENT_E,SEGMENT_ON);		
+		digitalWrite(First_SEGMENT_F,SEGMENT_ON);  
+		digitalWrite(First_SEGMENT_G,SEGMENT_ON); 
+	}
+
+	void First_display_number(int num)
+	{		
+		int first_tmp = 0;
+		if(num >= 10000)
+		{
+			first_tmp = num / 10000;
+			switch(first_tmp)
+			{
+				case 1:  
+					 digitalWrite(First_SEGMENT_A,SEGMENT_ON);  
+					 digitalWrite(First_SEGMENT_B,SEGMENT_OFF);  
+					 digitalWrite(First_SEGMENT_C,SEGMENT_OFF);  
+					 digitalWrite(First_SEGMENT_D,SEGMENT_ON);   
+					 digitalWrite(First_SEGMENT_E,SEGMENT_ON);
+					 digitalWrite(First_SEGMENT_F,SEGMENT_ON);  
+					 digitalWrite(First_SEGMENT_G,SEGMENT_ON);  
+					 break; 
+				 case 5:  
+					 digitalWrite(First_SEGMENT_A,SEGMENT_OFF);  
+					 digitalWrite(First_SEGMENT_B,SEGMENT_ON);  
+					 digitalWrite(First_SEGMENT_C,SEGMENT_OFF);  
+					 digitalWrite(First_SEGMENT_D,SEGMENT_OFF); 
+					digitalWrite(First_SEGMENT_E,SEGMENT_ON);					 
+					 digitalWrite(First_SEGMENT_F,SEGMENT_OFF);  
+					 digitalWrite(First_SEGMENT_G,SEGMENT_OFF);  
+					 break;  
+				 default:
+					First_clearFNDs();
+					break;
+			}
+		}
+		else
+		{
+			First_clearFNDs();
+		}
+	}
+	
+	void Second_initFNDs()
+	{
+		pinMode(Second_SEGMENT_A,OUTPUT);  
+	   pinMode(Second_SEGMENT_B,OUTPUT);  
+	   pinMode(Second_SEGMENT_C,OUTPUT);  
+	   pinMode(Second_SEGMENT_D,OUTPUT);
+		pinMode(Second_SEGMENT_E,OUTPUT);    
+	   pinMode(Second_SEGMENT_F,OUTPUT);  
+	   pinMode(Second_SEGMENT_G,OUTPUT); 
+	}
+
+	void Second_clearFNDs()
+	{
+		digitalWrite(Second_SEGMENT_A,SEGMENT_OFF);  
+		digitalWrite(Second_SEGMENT_B,SEGMENT_OFF);  
+		digitalWrite(Second_SEGMENT_C,SEGMENT_OFF);  
+		digitalWrite(Second_SEGMENT_D,SEGMENT_OFF);  
+		digitalWrite(Second_SEGMENT_E,SEGMENT_OFF);  
+		digitalWrite(Second_SEGMENT_F,SEGMENT_OFF);  
+		digitalWrite(Second_SEGMENT_G,SEGMENT_OFF); 
+	}
+
+	void Second_display_number(int num)  
+	{  
+		if(num <= 9999)
+		{
+		  switch(num)  
+		  {  
+			case 0:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_OFF);  
+				break;  
+			  
+			case 1:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_OFF);  
+				break;  
+			  
+			case 2:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_ON);  
+				break;  
+			  
+			case 3:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_ON);  
+				break;  
+			  
+			case 4:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_ON);  
+				break;  
+			  
+			case 5:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_ON);  
+				break;  
+			  
+			case 6:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_ON);  
+				break;  
+			  
+			case 7:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_OFF);  
+				break;  
+			  
+			case 8:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_ON);  
+				break;  
+			  
+			case 9:  
+				digitalWrite(Second_SEGMENT_A,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_B,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_D,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_E,SEGMENT_OFF);  
+				digitalWrite(Second_SEGMENT_F,SEGMENT_ON);  
+				digitalWrite(Second_SEGMENT_G,SEGMENT_ON);  
+				break;  
+			  
+			default:  
+				Second_clearFNDs();
+				break;
+			}	
+		}
+		else
+		{
+			digitalWrite(Second_SEGMENT_A,SEGMENT_ON);  
+			digitalWrite(Second_SEGMENT_B,SEGMENT_ON);  
+			digitalWrite(Second_SEGMENT_C,SEGMENT_ON);  
+			digitalWrite(Second_SEGMENT_D,SEGMENT_ON);  
+			digitalWrite(Second_SEGMENT_E,SEGMENT_ON);  
+			digitalWrite(Second_SEGMENT_F,SEGMENT_ON);  
+			digitalWrite(Second_SEGMENT_G,SEGMENT_OFF);
+		}		
+	}  
+
+	void Second_digit_number(int num)  
+	{  
+		pinMode(Second_SEGMENT_1,OUTPUT);  
+		pinMode(Second_SEGMENT_2,OUTPUT);  
+		pinMode(Second_SEGMENT_3,OUTPUT);  
+		pinMode(Second_SEGMENT_4,OUTPUT);  
+		float start=millis();  
+	  
+	  if(num>=1000){
+		  for(int i=4;i>0;i--)  
+		{  
+			switch(i)  
+			{  
+				case 1:  
+					digitalWrite(Second_SEGMENT_1,DIGIT_ON); 
+					break;  
+				case 2:  
+					digitalWrite(Second_SEGMENT_2,DIGIT_ON);  
+					break;  
+				case 3:  
+					digitalWrite(Second_SEGMENT_3,DIGIT_ON);  
+					break;  
+				case 4:  
+					digitalWrite(Second_SEGMENT_4,DIGIT_ON);  
+					break;  
+			}  
+		
+			Second_display_number(num%10);  
+			num/=10;  
+			delay(1);   
+		
+		// print_number(10);   
+			digitalWrite(Second_SEGMENT_1,DIGIT_OFF);  
+			digitalWrite(Second_SEGMENT_2,DIGIT_OFF);  
+			digitalWrite(Second_SEGMENT_3,DIGIT_OFF);  
+			digitalWrite(Second_SEGMENT_4,DIGIT_OFF);  
+		}  
+	  }
+		else if(num>=100&&num<=999){
+		  for(int i=4;i>1;i--)  
+			{  
+				switch(i)  
+				{  
+					case 1:  
+						digitalWrite(Second_SEGMENT_1,DIGIT_ON); 
+						break;  
+					case 2:  
+						digitalWrite(Second_SEGMENT_2,DIGIT_ON);  
+						break;  
+					case 3:  
+						digitalWrite(Second_SEGMENT_3,DIGIT_ON);  
+						break;  
+					case 4:  
+						digitalWrite(Second_SEGMENT_4,DIGIT_ON);  
+						break;  
+				}  
+			
+				Second_display_number(num%10);  
+				num/=10;  
+				delay(1);   
+			
+			// print_number(10);   
+				digitalWrite(Second_SEGMENT_1,DIGIT_OFF);  
+				digitalWrite(Second_SEGMENT_2,DIGIT_OFF);  
+				digitalWrite(Second_SEGMENT_3,DIGIT_OFF);  
+				digitalWrite(Second_SEGMENT_4,DIGIT_OFF);  
+			}  
+		}
+
+
+		else if(num>=10&&num<=99){
+		for(int i=4;i>2;i--)  
+		{  
+			switch(i)  
+			{  
+				case 1:  
+					digitalWrite(Second_SEGMENT_1,DIGIT_ON); 
+					break;  
+				case 2:  
+					digitalWrite(Second_SEGMENT_2,DIGIT_ON);  
+					break;  
+				case 3:  
+					digitalWrite(Second_SEGMENT_3,DIGIT_ON);  
+					break;  
+				case 4:  
+					digitalWrite(Second_SEGMENT_4,DIGIT_ON);  
+					break;  
+			}  
+		
+			Second_display_number(num%10);  
+			num/=10;  
+			delay(1);   
+		
+		// print_number(10);   
+			digitalWrite(Second_SEGMENT_1,DIGIT_OFF);  
+			digitalWrite(Second_SEGMENT_2,DIGIT_OFF);  
+			digitalWrite(Second_SEGMENT_3,DIGIT_OFF);  
+			digitalWrite(Second_SEGMENT_4,DIGIT_OFF);  
+		}  
+		}
+		while((millis()-start)<1);  
+	}
+	
+	struct mq_attr attr={
+		.mq_maxmsg = 10,
+		.mq_msgsize = 4,
+	};
+	
+	int Money = 0;
+	
+	wiringPiSetup();
+	
+	mq_unlink("/msg_q");
+	mfd = mq_open("/msg_q", O_RDWR | O_CREAT, 0666, &attr);
+	
+	while(1){
+		Money = 0;
+		if(mq_receive(mfd,(char*)&Money, attr.mq_msgsize, NULL) != 0)
+		{
+			First_initFNDs();
+			First_clearFNDs();
+			Second_initFNDs();
+			Second_clearFNDs();
+			for(int i=0;i<1000;i++)
+			{
+				First_display_number(Money);
+				Second_digit_number(Money);
+			}
+			//printf("check\n");
+		}
+		delay(3000);
+		First_clearFNDs();
+		Second_clearFNDs();
+			
+		//printf("Thread : %d\n", Money);
+	}
+}
+
+PI_THREAD(PW_wait)
+{
+	const int Speaker_PIN = 1;
+	const int PW_AVR_PIN1 = 25;
+	const int PW_AVR_PIN2 = 27;
+	const int PW_AVR_PIN3 = 28;
+	
+	unsigned int Fail_cnt = 0;
+	char result1 = 0, result2 = 0, result3 = 0;
+	
+	void Button_sound()
+	{
+		pwmSetRange(1000000/1047);
+		  pwmWrite(Speaker_PIN, 1000000/1047/2);
+		  delay(30); 
+	}
+	
+	void rest(void)
+	{
+		pwmSetRange(1000000/1000000);
+		pwmWrite(Speaker_PIN, 1000000/1000000/2);
+		delay(100);   //??? 
+	}
+	
+	void Success()
+	{
+		pwmSetRange(1000000/1319);
+		 pwmWrite(Speaker_PIN, 1000000/1319/2);
+		 delay(160);
+		 
+		pwmSetRange(1000000/1047);
+		 pwmWrite(Speaker_PIN, 1000000/1047/2);
+		 delay(160);
+		 
+		 pwmSetRange(1000000/1175);
+		 pwmWrite(Speaker_PIN, 1000000/1175/2);
+		 delay(160);
+		 
+		 pwmSetRange(1000000/1568);
+		 pwmWrite(Speaker_PIN, 1000000/1568/2);
+		 delay(160);
+	}
+	
+	void Fail()
+	{
+		pwmSetRange(1000000/1047);
+		pwmWrite(Speaker_PIN, 1000000/1047/2);
+		delay(100);
+		
+		pwmSetRange(1000000/1000000);
+		pwmWrite(Speaker_PIN, 1000000/1000000/2);
+		delay(50);	//쉼표
+		
+		pwmSetRange(1000000/1047);
+		pwmWrite(Speaker_PIN, 1000000/1047/2);
+		delay(100);
+		
+		pwmSetRange(1000000/1000000);
+		pwmWrite(Speaker_PIN, 1000000/1000000/2);
+		delay(50);	//쉼표
+	}
+	
+	void Waring()
+	{
+		for(int note=0;note<=20;note++){ 
+		  pwmSetRange(1000000/1047);
+		  pwmWrite(Speaker_PIN, 1000000/1047/2);
+		  delay(50);   //버튼누를시 음성 1047
+		  /////////////////////////버튼누를때를 위한 옥타브음계
+		  pwmSetRange(1000000/880);
+		  pwmWrite(Speaker_PIN, 1000000/880/2);
+		  delay(50);  
+		}
+	}
+	
+	wiringPiSetup();
+	
+	pinMode(PW_AVR_PIN1, INPUT);
+	pinMode(PW_AVR_PIN2, INPUT);
+	pinMode(Speaker_PIN, PWM_OUTPUT);
+	
+	pwmSetClock(19);
+	pwmSetMode(PWM_MODE_MS);
+	
+	while(1)
+	{
+		rest();
+
+		result1 = digitalRead(PW_AVR_PIN1);
+		result2 = digitalRead(PW_AVR_PIN2);
+		result3 = digitalRead(PW_AVR_PIN3);
+		//printf("%d %d %d \n", result1, result2, result3);
+		if(result1 == 0 && result2 == 1 && result3 == 1)
+		{
+			Button_sound();
+		}
+		else if(result1 == 1 && result2 == 0 && result3 == 0)
+		{
+			Success();
+		}
+		else if(result1 == 1 && result2 == 1 && result3 == 1)
+		{
+			if(Fail_cnt >= 4)
+			{
+				Waring();
+				Fail_cnt = 0;
+			}
+			else
+			{
+				Fail();
+				Fail_cnt++;
+			}
+		}
+		result1 = 0;
+		result2 = 0;
+		result3 = 0;
+	}
+}
+
+void main(void)
+{
+	
+	const int Money_PIN1 = 8;
+	const int Money_PIN2 = 9;
+	const int Money_PIN3 = 7;
+	const int Money_PIN4 = 0;
+	char Result1, Result2, Result3, Result4 = 0;
+	unsigned int Money = 0;
+	
+	struct mq_attr attr = {
+		.mq_maxmsg = 10,
+		.mq_msgsize = 4,
+	};
+	
+	wiringPiSetup();
+	
+	pinMode(Money_PIN1, INPUT);
+	pinMode(Money_PIN2, INPUT);
+	pinMode(Money_PIN3, INPUT);
+	pinMode(Money_PIN4, INPUT);
+	
+	piThreadCreate(FND);
+	
+	piThreadCreate(PW_wait);
+	
+	Money_PIN_setup();
+	
+	while(1)
+	{
+		Result1 = digitalRead(Money_PIN1);
+		Result2 = digitalRead(Money_PIN2);
+		Result3 = digitalRead(Money_PIN3);
+		Result4 = digitalRead(Money_PIN4);
+		
+		printf("second : %d %d %d %d \n", Result1, Result2, Result3, Result4);
+		delay(300);
+		if(Result1 == 1 && Result2 == 0 && Result3 == 0 && Result4 == 0) // 0001
+			Money = 10;
+		else if(Result1 == 0 && Result2 == 1 && Result3 == 0 && Result4 == 0) // 0010
+			Money = 50;
+		else if(Result1 == 0 && Result2 == 0 && Result3 == 1 && Result4 == 0) // 0010
+			Money = 100;
+		else if(Result1 == 0 && Result2 == 0 && Result3 == 0 && Result4 == 1) // 0001
+			Money = 500;
+		else if(Result1 == 0 && Result2 == 1 && Result3 == 0 && Result4 == 1) // 0101
+			Money = 1000;
+		else if(Result1 == 1 && Result2 == 1 && Result3 == 1 && Result4 == 0) // 0111
+			Money = 5000;
+		else if(Result1 == 1 && Result2 == 1 && Result3 == 0 && Result4 == 0) // 1100
+			Money = 10000;
+		else if(Result1 == 1 && Result2 == 0 && Result3 == 0 && Result4 == 1) // 1001
+			Money = 50000;
+
+		mq_send(mfd, (char*)&Money, attr.mq_msgsize, 1);
+		Result1 = 0;
+		Result2 = 0;
+		Result3 = 0;
+		Result4 = 0;
+		printf("Main : %d\n", Money);
+		Money = 0;
+	}
+}
